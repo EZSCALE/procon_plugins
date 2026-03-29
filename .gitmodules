@@ -1,0 +1,54 @@
+[submodule "AdKats"]
+	path = AdKats
+	url = git@github.com:AdKats/AdKats.git
+[submodule "AdKats-LRT"]
+	path = AdKats-LRT
+	url = git@github.com:AdKats/AdKats-LRT.git
+[submodule "AdaptiveServerSize"]
+	path = AdaptiveServerSize
+	url = git@github.com:AdKats/AdaptiveServerSize.git
+[submodule "ChatGUIDStatsAndMapstatsLogger"]
+	path = ChatGUIDStatsAndMapstatsLogger
+	url = git@github.com:AdKats/ChatGUIDStatsAndMapstatsLogger.git
+[submodule "EventLogger"]
+	path = EventLogger
+	url = git@github.com:AdKats/EventLogger.git
+[submodule "LatencyManager"]
+	path = LatencyManager
+	url = git@github.com:AdKats/LatencyManager.git
+[submodule "ProconRulz"]
+	path = ProconRulz
+	url = git@github.com:AdKats/ProconRulz.git
+[submodule "ProconRulzNL"]
+	path = ProconRulzNL
+	url = git@github.com:AdKats/ProconRulzNL.git
+[submodule "PunkbusterScreenshotEnforcer"]
+	path = PunkbusterScreenshotEnforcer
+	url = git@github.com:AdKats/PunkbusterScreenshotEnforcer.git
+[submodule "TrueBalancer"]
+	path = TrueBalancer
+	url = git@github.com:AdKats/TrueBalancer.git
+[submodule "UltimateMapManager"]
+	path = UltimateMapManager
+	url = git@github.com:AdKats/UltimateMapManager.git
+[submodule "fail-log"]
+	path = fail-log
+	url = git@github.com:AdKats/fail-log.git
+[submodule "insane-limits"]
+	path = insane-limits
+	url = git@github.com:AdKats/insane-limits.git
+[submodule "multi-balancer"]
+	path = multi-balancer
+	url = git@github.com:AdKats/multi-balancer.git
+[submodule "vip-slot-manager"]
+	path = vip-slot-manager
+	url = git@github.com:AdKats/vip-slot-manager.git
+[submodule "voteban"]
+	path = voteban
+	url = git@github.com:AdKats/voteban.git
+[submodule "xVotemap"]
+	path = xVotemap
+	url = git@github.com:AdKats/xVotemap.git
+[submodule "bf4db"]
+	path = bf4db
+	url = git@github.com:bf4db/plugin.git
