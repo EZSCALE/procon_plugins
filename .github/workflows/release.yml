@@ -98,11 +98,6 @@ jobs:
             cp -r AdKats/src/lib "$BUNDLE_DIR/Plugins/BF4/AdKats/" 2>/dev/null || true
           fi
 
-          # Copy SQL schema
-          if [ -f "AdKats/src/adkats.sql" ]; then
-            cp AdKats/src/adkats.sql "$BUNDLE_DIR/"
-          fi
-
           echo ""
           echo "=== Bundle contents ==="
           find "$BUNDLE_DIR" -type f | sort | head -100
