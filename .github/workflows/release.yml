@@ -1,0 +1,152 @@
+name: Release Plugin Bundle
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    name: Build Plugin Bundle
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '8.0.x'
+
+      - name: Get version from tag
+        id: version
+        env:
+          REF_NAME: ${{ github.ref_name }}
+        run: echo "VERSION=$REF_NAME" >> "$GITHUB_OUTPUT"
+
+      - name: Build BF4DB_API.dll
+        working-directory: bf4db/src
+        run: |
+          dotnet restore BF4DB_API.csproj
+          dotnet build BF4DB_API.csproj -c Release -o /tmp/bf4db_build/
+
+      - name: Build plugin bundle
+        run: |
+          # ================================================================
+          # Plugin -> Game mapping
+          # ================================================================
+          # Format: "plugin_dir:src_subdir:game1,game2,..."
+          # src_subdir is the subfolder name under src/ for partial classes
+          # (empty if single-file plugin)
+          #
+          PLUGINS=(
+            "AdKats:AdKats:BF3,BF4,BFHL,BFBC2"
+            "AdKats-LRT:AdKatsLRT:BF3,BF4,BFHL"
+            "AdaptiveServerSize::BF3,BF4,BFHL"
+            "ChatGUIDStatsAndMapstatsLogger:CChatGUIDStatsLogger:BF3,BF4,BFBC2,MOH,MOHW"
+            "EventLogger::BF3,BF4,BFHL,BFBC2"
+            "fail-log::BF3,BF4,BFHL,BFBC2"
+            "insane-limits:InsaneLimits:BF3,BF4,BFHL"
+            "LatencyManager::BF3,BF4,BFHL"
+            "multi-balancer:MULTIbalancer:BF3,BF4,BFHL"
+            "ProconRulz:ProconRulz:BF3,BF4,BFHL,BFBC2"
+            "PunkbusterScreenshotEnforcer::BF3,BF4"
+            "TrueBalancer:TrueBalancer:BF3,BF4"
+            "UltimateMapManager::BF3,BF4,BFHL,MOHW"
+            "vip-slot-manager:VipSlotManager:BF3,BF4,BFHL,BFBC2"
+            "voteban::BF3,BF4"
+            "xVotemap::BF3,BF4"
+          )
+
+          BUNDLE_DIR="ProconPlugins"
+          mkdir -p "$BUNDLE_DIR"
+
+          for entry in "${PLUGINS[@]}"; do
+            IFS=':' read -r plugin_dir subfolder games <<< "$entry"
+            IFS=',' read -ra GAME_LIST <<< "$games"
+
+            echo "=== $plugin_dir -> ${GAME_LIST[*]} ==="
+
+            for game in "${GAME_LIST[@]}"; do
+              game_dir="$BUNDLE_DIR/Plugins/$game"
+              mkdir -p "$game_dir"
+
+              # Copy all .cs files from src/ (top-level)
+              cp "$plugin_dir/src/"*.cs "$game_dir/" 2>/dev/null || true
+
+              # Copy subfolder partial classes if they exist
+              if [ -n "$subfolder" ] && [ -d "$plugin_dir/src/$subfolder" ]; then
+                mkdir -p "$game_dir/$subfolder"
+                cp -r "$plugin_dir/src/$subfolder/"* "$game_dir/$subfolder/"
+              fi
+            done
+          done
+
+          # bf4db is special: BF4 only, needs the compiled DLL
+          echo "=== bf4db -> BF4 ==="
+          mkdir -p "$BUNDLE_DIR/Plugins/BF4"
+          cp bf4db/src/BF4DB.cs "$BUNDLE_DIR/Plugins/BF4/"
+          cp /tmp/bf4db_build/BF4DB_API.dll "$BUNDLE_DIR/Plugins/BF4/"
+
+          # Copy data files that plugins need at runtime
+          if [ -d "AdKats/src/lib" ]; then
+            cp -r AdKats/src/lib "$BUNDLE_DIR/Plugins/BF4/AdKats/" 2>/dev/null || true
+          fi
+
+          # Copy SQL schema
+          if [ -f "AdKats/src/adkats.sql" ]; then
+            cp AdKats/src/adkats.sql "$BUNDLE_DIR/"
+          fi
+
+          echo ""
+          echo "=== Bundle contents ==="
+          find "$BUNDLE_DIR" -type f | sort | head -100
+
+      - name: Package bundle
+        env:
+          VERSION: ${{ steps.version.outputs.VERSION }}
+        run: |
+          cd ProconPlugins
+          zip -r "../ProconPlugins-${VERSION}.zip" .
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@153bb8e04406b158c6c84fc1615b65b24149a1fe # v2
+        env:
+          VERSION: ${{ steps.version.outputs.VERSION }}
+        with:
+          name: "Procon Plugins ${{ steps.version.outputs.VERSION }}"
+          files: "ProconPlugins-${{ steps.version.outputs.VERSION }}.zip"
+          body: |
+            ## Procon v2 Plugin Bundle
+
+            Download and extract the zip into your Procon v2 installation directory.
+            The `Plugins/` folder structure is ready to use -- files are organized by game type.
+
+            ### Included Plugins
+            - AdKats (BF3, BF4, BFHL, BFBC2)
+            - AdKats-LRT (BF3, BF4, BFHL)
+            - AdaptiveServerSize (BF3, BF4, BFHL)
+            - BF4DB (BF4)
+            - CChatGUIDStatsLogger (BF3, BF4, BFBC2, MOH, MOHW)
+            - EventLogger (BF3, BF4, BFHL, BFBC2)
+            - FailLog (BF3, BF4, BFHL, BFBC2)
+            - InsaneLimits (BF3, BF4, BFHL)
+            - LatencyManager (BF3, BF4, BFHL)
+            - MULTIbalancer (BF3, BF4, BFHL)
+            - ProconRulz (BF3, BF4, BFHL, BFBC2)
+            - PBSSE (BF3, BF4)
+            - TrueBalancer (BF3, BF4)
+            - UltimateMapManager (BF3, BF4, BFHL, MOHW)
+            - VipSlotManager (BF3, BF4, BFHL, BFBC2)
+            - VoteBan (BF3, BF4)
+            - xVotemap (BF3, BF4)
+
+            ### Installation
+            1. Extract the zip
+            2. Copy the `Plugins/` folder into your Procon v2 directory
+            3. Connect to a server -- plugins compile and load automatically
